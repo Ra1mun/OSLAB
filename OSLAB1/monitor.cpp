@@ -5,6 +5,7 @@
 #include <condition_variable>
 #include <chrono>
 #include <random>
+#include <windows.h>
 
 using namespace std;
 
@@ -34,9 +35,10 @@ private:
     condition_variable cv_;
 };
 
+random_device rd;
+mt19937 gen(rd());
+
 Event generate_event_data() {
-    random_device rd;
-    mt19937 gen(rd());
     uniform_int_distribution<> dist(1, 100);
     Event event;
     event.data = dist(gen);
@@ -52,7 +54,7 @@ void producer(Monitor& monitor) {
         monitor.addEvent(event);
 
         cout << "Поставщик: Обработка события..." << endl;
-        _sleep(1);
+        Sleep(1000);
     }
 }
 
@@ -62,17 +64,17 @@ void consumer(Monitor& monitor) {
 
         cout << "Потребитель: Получено событие с данными " << event.data << endl;
         cout << "Потребитель: Обработка события..." << endl;
-        _sleep(1);
+        Sleep(1000);
     }
 }
 
 int main() {
     Monitor monitor;
     setlocale(LC_ALL, "russian");
-    thread supplierThread(producer, ref(monitor));
+    thread producerThread(producer, ref(monitor));
     thread consumerThread(consumer, ref(monitor));
 
-    supplierThread.join();
+    producerThread.join();
     consumerThread.join();
 
     return 0;
