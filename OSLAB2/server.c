@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <sys/select.h>
 #include <errno.h>
+#include <asm-generic/signal-defs.h>
 
 #define PORT 12345
 #define BACKLOG 5
@@ -72,7 +73,7 @@ void setup_signal_handling(struct sigaction *sa, sigset_t *sigmask) {
 int create_server_socket() {
     int server_fd;
     struct sockaddr_in server_addr;
-    server_fd = socket(AF_INET, SOCK_STREAM, 0));
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (server_fd == -1) {
         perror("socket");
@@ -84,7 +85,7 @@ int create_server_socket() {
     server_addr.sin_addr.s_addr = INADDR_ANY;
     server_addr.sin_port = htons(PORT);
 
-    int completeBind = bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr))
+    int completeBind = bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr));
     if (completeBind == -1) {
         perror("bind");
         close(server_fd);
@@ -133,12 +134,11 @@ int main() {
             got_sighup = 0;
         }
 
-        bool checkConnection = FD_ISSET(server_fd, &read_fds);
-        if (checkConnection) {
+        if (FD_ISSET(server_fd, &read_fds)) {
             handle_new_connection(server_fd, &client_fd);
         }
 
-        if (client_fd != -1 && checkConnection) {
+        if (client_fd != -1 && FD_ISSET(server_fd, &read_fds)) {
             handle_client_data(&client_fd, buffer);
         }
     }
