@@ -51,7 +51,7 @@ void handle_client_data(int *client_fd, char *buffer) {
     }
 }
 
-void setup_signal_handling(struct sigaction *sa, sigset_t *sigmask) {
+void setup_signal_handling(struct sigaction *sa, sigset_t *sigmask, sigset_t *origmask) {
     memset(sa, 0, sizeof(*sa));
     sa->sa_handler = handle_signal;
     sa->sa_flags = 0;
@@ -64,7 +64,7 @@ void setup_signal_handling(struct sigaction *sa, sigset_t *sigmask) {
 
     sigemptyset(sigmask);
     sigaddset(sigmask, SIGHUP);
-    if (sigprocmask(SIG_BLOCK, sigmask, NULL) == -1) {
+    if (sigprocmask(SIG_BLOCK, sigmask, origmask) == -1) { //добавить дополнительную маску
         perror("sigprocmask");
         exit(EXIT_FAILURE);
     }
@@ -107,11 +107,11 @@ int main() {
     int server_fd, client_fd = -1;
     fd_set read_fds;
     struct sigaction sa;
-    sigset_t sigmask;
+    sigset_t sigmask, origmask;
     char buffer[BUFFER_SIZE];
 
     server_fd = create_server_socket();
-    setup_signal_handling(&sa, &sigmask);
+    setup_signal_handling(&sa, &sigmask, &origmask);
 
     while (1) {
         FD_ZERO(&read_fds);
@@ -122,7 +122,7 @@ int main() {
 
         int nfds = (client_fd > server_fd ? client_fd : server_fd) + 1;
 
-        int ready = pselect(nfds, &read_fds, NULL, NULL, NULL, &sigmask);
+        int ready = pselect(nfds, &read_fds, NULL, NULL, NULL, &origmask);
         if (ready == -1) {
             if (errno == EINTR) continue;
             perror("pselect");
