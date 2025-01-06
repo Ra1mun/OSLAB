@@ -8,7 +8,7 @@
 #include <linux/time.h>
 
 MODULE_DESCRIPTION("Tomsk State University Kernel Module");
-MODULE_AUTHOR("jeffers1n");
+MODULE_AUTHOR("Mihao");
 
 #define PROCFS_NAME "days_in_millennium"
 
